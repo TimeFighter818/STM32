@@ -24,6 +24,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h"
 #include "delay.h"
+#include "StepMotor.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -158,5 +159,22 @@ void SysTick_Handler(void)
   * @}
   */ 
 
+/**
+  * @brief  This function handles TIM2 interrupt request.
+  * @param  None
+  * @retval None
+  */
+void TIM2_IRQHandler(void)
+{
+	if(TIM_GetITStatus(TIM2,TIM_IT_Update) != RESET)
+	{
+		TIM_ClearITPendingBit(TIM2,TIM_IT_Update);
+	}
+	StepMotor_Run();
+}
+
+/**
+  * @}
+  */ 
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

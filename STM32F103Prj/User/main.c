@@ -1,27 +1,40 @@
 #include "stm32f10x.h"
 #include "misc.h"
 #include "delay.h"
+#include "DCMotor.h"
+#include "StepMotor.h"
 
 //RCC_Configuration(), NVIC_Configuration(), GPIO_Config() 在引用前要声明一下。
 void RCC_Configuration(void); //系统时钟配置
 void NVIC_Configuration(void); //中断配置
 void GPIO_Config(void); //通用输入输出端口配置
 
+int8_t nSpeed=0;
 int main(void)
 {
 	RCC_Configuration(); //时钟初始化
 	GPIO_Config(); //端口初始化
 	NVIC_Configuration();  //中断初始化
 	
+	//测试直流电机
+	DCMotor_Init();
+	
+	DCMotor_Cmd(ENABLE);
+	
+	//测试步进电机
+	StepMotor_Init();
+	StepMotor_Cmd(ENABLE);
+	StepMotor_SetSteps(1,1000000);
+	StepMotor_SetSteps(3,-1000000);
+	
 	while(1)
 	{
 		
 		Delay_ms(1000);
-		GPIO_SetBits(GPIOA,GPIO_Pin_8);   //把PA8置1
-		GPIO_ResetBits(GPIOD,GPIO_Pin_2);
-		Delay_ms(1000);
-		GPIO_ResetBits(GPIOA,GPIO_Pin_8);  //把PA8置0
-		GPIO_SetBits(GPIOD,GPIO_Pin_2);
+		DCMotor_SetSpeed(nSpeed,nSpeed,nSpeed,nSpeed);
+		nSpeed++;
+		if(nSpeed>100) nSpeed = -100;
+		StepMotor_SetSteps(1,1000000);
 		
 	}
 	
@@ -92,7 +105,7 @@ void NVIC_Configuration(void)
   NVIC_Init(&NVIC_InitStructure);  
 	
 	/*使能定时中断*/
-	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;												//指定中断源
+	NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;												//指定中断源
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;							
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;										//指定响应优先级别
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;	
@@ -112,7 +125,7 @@ void GPIO_Config(void){
 	GPIO_InitTypeDef GPIO_InitStructure;
 	
 	//使能GPIOA/GPIOD的总线，否则端口不能工作，如果不用这个端口，可以不用使能。
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOD, ENABLE);	
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD, ENABLE);	
 
 	//配置PA8为LED0
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;				     
@@ -126,5 +139,54 @@ void GPIO_Config(void){
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;				//推挽输出
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;			 //口线翻转速度为50MHz
   GPIO_Init(GPIOD, &GPIO_InitStructure);	
+	
+	//使能TIM3时钟
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);  //使能TIM3时钟
+	
+	//PA6、PA7、PB0、PB1 设为TIM3四个PWM输出通道，作为直流电机PWM信号
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
+	
+	//配置PA4\PA5\PC4\PC5分别控制电机的方向，PC13为公共使能端
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_13;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4|GPIO_Pin_5;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+	
+	//使能TIM2时钟
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);  //使能TIM3时钟
+	
+	//配置PA0\PA1\PA2\PA3 设为TIM2四个PWM输出通道，作为步进电机CLK信号
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+	
+	//配置PC0\PC1\PC2\PC3 分别控制步进电机的方向，PC14为步进电机使能端
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3  | GPIO_Pin_14;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+  GPIO_Init(GPIOC, &GPIO_InitStructure);	
+	
+	//配置PB6\PB7\PB8\PB9 设为TIM4四个PWM输出通道，作为舵机控制信号
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+  GPIO_Init(GPIOB, &GPIO_InitStructure);	
+	
 	
 }

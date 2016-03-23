@@ -400,6 +400,11 @@
               <FileType>1</FileType>
               <FilePath>.\User\DCMotor.c</FilePath>
             </File>
+            <File>
+              <FileName>StepMotor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\StepMotor.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

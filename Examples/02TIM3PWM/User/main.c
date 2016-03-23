@@ -118,7 +118,7 @@ void GPIO_Config(void){
 	GPIO_InitTypeDef GPIO_InitStructure;
 	
 	//使能GPIOA/GPIOD的总线，否则端口不能工作，如果不用这个端口，可以不用使能。
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOD, ENABLE);	
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOD, ENABLE);	
 
 	//配置PA8为LED0
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;				     
@@ -132,5 +132,19 @@ void GPIO_Config(void){
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;				//推挽输出
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;			 //口线翻转速度为50MHz
   GPIO_Init(GPIOD, &GPIO_InitStructure);	
+	
+	
+		//使能TIM3时钟
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);  //???TIM3???
+	
+	/* PA6、PA7、PB0、PB1 设为TIM3四个PWM输出通道 */
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
 	
 }
