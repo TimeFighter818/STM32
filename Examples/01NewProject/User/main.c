@@ -7,7 +7,6 @@ void RCC_Configuration(void); //系统时钟配置
 void NVIC_Configuration(void); //中断配置
 void GPIO_Config(void); //通用输入输出端口配置
 
-
 int main(void)
 {
 	RCC_Configuration(); //时钟初始化
@@ -17,10 +16,12 @@ int main(void)
 	while(1)
 	{
 		
-		Delay_ms(1);
-		GPIO_SetBits(GPIOC,GPIO_Pin_1);   //把PC1置1
-		Delay_ms(1);
-		GPIO_ResetBits(GPIOC,GPIO_Pin_1);  //把PC1置0
+		Delay_ms(1000);
+		GPIO_SetBits(GPIOA,GPIO_Pin_8);   //把PA8置1
+		GPIO_ResetBits(GPIOD,GPIO_Pin_2);
+		Delay_ms(1000);
+		GPIO_ResetBits(GPIOA,GPIO_Pin_8);  //把PA8置0
+		GPIO_SetBits(GPIOD,GPIO_Pin_2);
 		
 	}
 	
@@ -35,11 +36,9 @@ void RCC_Configuration(void)
 				//我们还是自己来配置吧
 	      RCC_DeInit();
 
-				RCC_HSEConfig(RCC_HSE_OFF);  //禁止外部时钟
-
-        RCC_HSICmd(ENABLE);          //打开内部时钟
+				RCC_HSEConfig(RCC_HSE_ON);  //使用外部8MHz晶振
         
-        while(RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET)        
+        while(RCC_GetFlagStatus(RCC_FLAG_HSERDY) == RESET)        
         {        
         }
 
@@ -52,9 +51,9 @@ void RCC_Configuration(void)
         //APB2
         RCC_PCLK2Config(RCC_HCLK_Div1);
         //APB1
-        RCC_PCLK1Config(RCC_HCLK_Div1);
+        RCC_PCLK1Config(RCC_HCLK_Div2);
         //PLL 倍频
-        RCC_PLLConfig(RCC_PLLSource_HSI_Div2, RCC_PLLMul_16);        //内部时钟倍频*16。内部晶振8MHz，除以2进入PLL，倍频16，则PLL输出64MHz
+        RCC_PLLConfig(RCC_PLLSource_HSE_Div1, RCC_PLLMul_9);        //外部晶振*9，外部晶振8MHz，进入PLL，倍频9，则PLL输出72MHz
         RCC_PLLCmd(ENABLE);                        										//使能倍频
                                                                                                          
 				//等待指定的 RCC 标志位设置成功 等待PLL初始化成功
@@ -71,6 +70,7 @@ void RCC_Configuration(void)
         ***************************************************/
                 
         while(RCC_GetSYSCLKSource() != 0x08){}		//返回0x08说明使用PLL作为系统时钟成功
+					
 }
 
 /*中断配置函数*/
@@ -80,14 +80,14 @@ void NVIC_Configuration(void)
 	RCC_ClocksTypeDef RCC_Clocks;  //RCC时钟结构体
   /* Configure the NVIC Preemption Priority Bits */  
   /* Configure one bit for preemption priority */
-  /* 优先级组 说明了抢占优先级所用的位数，和子优先级所用的位数   在这里是1， 7 */    
-  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);		   
+  /* 优先级组 说明了抢占优先级所用的位数，和子优先级所用的位数。这里是2，2*/    
+  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);		   
   
 
 	  /* Enable the RTC Interrupt 使能实时时钟中断*/
   NVIC_InitStructure.NVIC_IRQChannel = RTC_IRQn;					//配置外部中断源（秒中断） 
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 7;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);  
 	
@@ -98,7 +98,7 @@ void NVIC_Configuration(void)
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;	
 	NVIC_Init(&NVIC_InitStructure); 
 	
-
+	//设置嘀嗒时钟中断
 	RCC_GetClocksFreq(&RCC_Clocks);		//获取系统时钟
 	if (SysTick_Config(RCC_Clocks.SYSCLK_Frequency/100000))		   //时钟节拍中断时10us一次  用于定时。 例如时钟频率48MHz，/480，则10us一次
   { 
@@ -111,24 +111,20 @@ void NVIC_Configuration(void)
 void GPIO_Config(void){
 	GPIO_InitTypeDef GPIO_InitStructure;
 	
-	//使能GPIOA/GPIOB/GPIOC/GPIOD的总线，否则端口不能工作，如果不用这个端口，可以不用使能。
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD, ENABLE);	
+	//使能GPIOA/GPIOD的总线，否则端口不能工作，如果不用这个端口，可以不用使能。
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOD, ENABLE);	
 
-	//配置PA3为驱动电源开关线
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;				     
+	//配置PA8为LED0
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;				     
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;			 //口线翻转速度为50MHz
   GPIO_Init(GPIOA, &GPIO_InitStructure);	
 	
 	
-	//配置步进电机输出线
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_3;				 //PC1、PC2、PC3	
+	//配置PD2为LED1
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;				 //PD2	
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;				//推挽输出
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;			 //口线翻转速度为50MHz
-  GPIO_Init(GPIOC, &GPIO_InitStructure);	
+  GPIO_Init(GPIOD, &GPIO_InitStructure);	
 	
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1|GPIO_Pin_2;			//PB1、PB2	     
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;				//推挽输出
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;			 //口线翻转速度为50MHz
-  GPIO_Init(GPIOB, &GPIO_InitStructure);	
 }

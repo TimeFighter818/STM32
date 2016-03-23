@@ -1,5 +1,6 @@
-Examples/02TIM3PWM/JLinkLog.txt
-Examples/02TIM3PWM/JLinkSettings.ini
-STM32F103Prj/JLinkLog.txt
-STM32F103Prj/JLinkSettings.ini
+*/JLinkLog.txt
+*/JLinkSettings.ini
 *.tlan
+*.bak
+*/Listings
+*/Objects
