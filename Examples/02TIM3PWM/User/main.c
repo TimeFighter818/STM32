@@ -1,28 +1,34 @@
 #include "stm32f10x.h"
 #include "misc.h"
 #include "delay.h"
+#include "TIM3PWM.h"
 
 //RCC_Configuration(), NVIC_Configuration(), GPIO_Config() 在引用前要声明一下。
 void RCC_Configuration(void); //系统时钟配置
 void NVIC_Configuration(void); //中断配置
 void GPIO_Config(void); //通用输入输出端口配置
 
+uint16_t nDuty=0;
+
 int main(void)
 {
+	
 	RCC_Configuration(); //时钟初始化
 	GPIO_Config(); //端口初始化
 	NVIC_Configuration();  //中断初始化
 	
+	TIM3PWM_Init();
+	
 	while(1)
 	{
-		
+		//测试TIM3PWM
+		nDuty++;
+		if(nDuty>100)nDuty=0;
+		TIM3PWM_SetOC1Duty(nDuty);
+		TIM3PWM_SetOC2Duty(nDuty);
+		TIM3PWM_SetOC3Duty(nDuty);
+		TIM3PWM_SetOC4Duty(nDuty);
 		Delay_ms(1000);
-		GPIO_SetBits(GPIOA,GPIO_Pin_8);   //把PA8置1
-		GPIO_ResetBits(GPIOD,GPIO_Pin_2);
-		Delay_ms(1000);
-		GPIO_ResetBits(GPIOA,GPIO_Pin_8);  //把PA8置0
-		GPIO_SetBits(GPIOD,GPIO_Pin_2);
-		
 	}
 	
 }
