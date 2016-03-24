@@ -3,15 +3,19 @@
 #include "delay.h"
 #include "DCMotor.h"
 #include "StepMotor.h"
-
+#include "ServoMotor.h"
+#include "USART.h"
 //RCC_Configuration(), NVIC_Configuration(), GPIO_Config() 在引用前要声明一下。
 void RCC_Configuration(void); //系统时钟配置
 void NVIC_Configuration(void); //中断配置
 void GPIO_Config(void); //通用输入输出端口配置
 
 int8_t nSpeed=0;
+uint16_t nServoPulse=1000;
 int main(void)
 {
+	uint8_t i;
+	
 	RCC_Configuration(); //时钟初始化
 	GPIO_Config(); //端口初始化
 	NVIC_Configuration();  //中断初始化
@@ -27,14 +31,42 @@ int main(void)
 	StepMotor_SetSteps(1,1000000);
 	StepMotor_SetSteps(3,-1000000);
 	
+	//测试舵机
+	ServoMotor_Init();
+	
+	//测试串口1
+	USART1_Init();  //要改波特率什么的请到函数里去改，默认是115200
+	
 	while(1)
 	{
 		
 		Delay_ms(1000);
 		DCMotor_SetSpeed(nSpeed,nSpeed,nSpeed,nSpeed);
 		nSpeed++;
-		if(nSpeed>100) nSpeed = -100;
-		StepMotor_SetSteps(1,1000000);
+		if(nSpeed>90) nSpeed = -90;
+		
+		//StepMotor_SetSteps(1,1000000);
+		
+		ServoMotor_SetPulse(1,nServoPulse);
+		ServoMotor_SetPulse(2,nServoPulse);
+		ServoMotor_SetPulse(3,nServoPulse);
+		ServoMotor_SetPulse(4,nServoPulse);
+		nServoPulse += 10;
+		if(nServoPulse>2000) nServoPulse = 1000;
+		
+		//测试串口
+		USART_Process();   //可以调用这个命令处理
+		
+		//或者可以直接使用完整帧标志位以及接收缓冲区变量
+		if(USART_FrameFlag == 1)
+		{
+			for(i=0;i<CMD_BYTE_LENGTH;i++)
+			{
+				USART_SendData(USART1,USART_Rx1Buff[i]);
+			}
+			
+			USART_FrameFlag = 0;
+		}
 		
 	}
 	
@@ -97,17 +129,24 @@ void NVIC_Configuration(void)
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);		   
   
 
-	  /* Enable the RTC Interrupt 使能实时时钟中断*/
-  NVIC_InitStructure.NVIC_IRQChannel = RTC_IRQn;					//配置外部中断源（秒中断） 
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStructure);  
+//	  /* Enable the RTC Interrupt 使能实时时钟中断*/
+//  NVIC_InitStructure.NVIC_IRQChannel = RTC_IRQn;					//配置外部中断源（秒中断） 
+//  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
+//  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
+//  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+//  NVIC_Init(&NVIC_InitStructure);  
 	
-	/*使能定时中断*/
+	//使能USART1中断
+  NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);	
+	
+	/*使能定时TIM2中断*/
 	NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;												//指定中断源
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;							
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;										//指定响应优先级别
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;							
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;										//指定响应优先级别
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;	
 	NVIC_Init(&NVIC_InitStructure); 
 	
@@ -141,7 +180,7 @@ void GPIO_Config(void){
   GPIO_Init(GPIOD, &GPIO_InitStructure);	
 	
 	//使能TIM3时钟
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);  //使能TIM3时钟
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE); 
 	
 	//PA6、PA7、PB0、PB1 设为TIM3四个PWM输出通道，作为直流电机PWM信号
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
@@ -164,7 +203,7 @@ void GPIO_Config(void){
   GPIO_Init(GPIOA, &GPIO_InitStructure);
 	
 	//使能TIM2时钟
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);  //使能TIM3时钟
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE); 
 	
 	//配置PA0\PA1\PA2\PA3 设为TIM2四个PWM输出通道，作为步进电机CLK信号
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
@@ -181,12 +220,30 @@ void GPIO_Config(void){
 
   GPIO_Init(GPIOC, &GPIO_InitStructure);	
 	
+	
+		//使能TIM4时钟
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);  
+	
 	//配置PB6\PB7\PB8\PB9 设为TIM4四个PWM输出通道，作为舵机控制信号
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 
   GPIO_Init(GPIOB, &GPIO_InitStructure);	
+	
+	
+		/*使能  USART1 时钟 */
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1 | RCC_APB2Periph_GPIOA, ENABLE);
+	/* USART1 GPIO config */ 
+	/* Configure USART1 Tx (PA.09) as alternate function push-pull */
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	/* Configure USART1 Rx (PA.10) as input floating */
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
 	
 	
 }

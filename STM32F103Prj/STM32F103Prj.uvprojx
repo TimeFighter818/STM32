@@ -405,6 +405,16 @@
               <FileType>1</FileType>
               <FilePath>.\User\StepMotor.c</FilePath>
             </File>
+            <File>
+              <FileName>ServoMotor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\ServoMotor.c</FilePath>
+            </File>
+            <File>
+              <FileName>USART.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\USART.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

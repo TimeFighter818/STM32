@@ -25,6 +25,7 @@
 #include "stm32f10x_it.h"
 #include "delay.h"
 #include "StepMotor.h"
+#include "USART.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -171,6 +172,29 @@ void TIM2_IRQHandler(void)
 		TIM_ClearITPendingBit(TIM2,TIM_IT_Update);
 	}
 	StepMotor_Run();
+}
+
+/**
+  * @brief  This function handles USART1 interrupt request.
+  * @param  None
+  * @retval None
+  */
+void USART1_IRQHandler(void)      //串口1中断服务
+{
+	uint8_t getchar;
+  if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)	   //判断读寄存器是否为空
+  {	
+    /* Read one byte from the receive data register */
+    getchar = USART_ReceiveData(USART1);   //将读寄存器的数据缓存到接收缓冲区里
+	
+    USART_GetChar(getchar);
+  }
+  
+  if(USART_GetITStatus(USART1, USART_IT_TXE) != RESET)                   //这段是为了避免STM32 USART第一个字节发送不出去的BUG 
+  { 
+     USART_ITConfig(USART1, USART_IT_TXE, DISABLE);					     //禁止发送缓冲器空中断
+  }	
+  
 }
 
 /**

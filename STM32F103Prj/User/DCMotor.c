@@ -4,7 +4,7 @@
 void DCMotor_Init(void)
 {
 	//端口配置在GPIO_Config函数中进行，如果那边没有配置，请在这里配置
-	DCMotor_Cmd(0);
+	DCMotor_Cmd(DISABLE);
 	TIM3PWM_Init();
 	MOTOR1_FWD;
 	MOTOR2_FWD;
