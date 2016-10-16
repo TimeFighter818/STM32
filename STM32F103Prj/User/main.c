@@ -192,8 +192,8 @@ void GPIO_Config(void){
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
 	
-	//配置PA4\PA5\PC4\PC5分别控制电机的方向，PC13为公共使能端
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_13;
+	//配置PA4\PA5\PC4\PC5\PB10\PB11\PC13\PC15分别控制电机的方向
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_13 | GPIO_Pin_15;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 
@@ -201,6 +201,9 @@ void GPIO_Config(void){
 
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4|GPIO_Pin_5;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
+	
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10|GPIO_Pin_11;
+  GPIO_Init(GPIOB, &GPIO_InitStructure);	
 	
 	//使能TIM2时钟
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE); 
