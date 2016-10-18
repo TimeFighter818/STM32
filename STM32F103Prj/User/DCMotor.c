@@ -96,20 +96,22 @@ void DCMotor_Init(void)
 //使能电机，1-使能，0-禁止
 void DCMotor_Cmd(FunctionalState NewState)
 {
+	//先把电机停下来
+	MOTOR1_STP;
+	MOTOR2_STP;
+	MOTOR3_STP;
+	MOTOR4_STP;
 	if(NewState != DISABLE)
 	{
-		GPIO_SetBits(MOTOR1_EN_PIN);
-		GPIO_SetBits(MOTOR2_EN_PIN);
-		GPIO_SetBits(MOTOR3_EN_PIN);
-		GPIO_SetBits(MOTOR4_EN_PIN);
-
+		//使能PWM输出
 		TIM_Cmd(TIM3, ENABLE);
 		
 	}
 	else
 	{
+		//关闭PWM输出
 		TIM_Cmd(TIM3, DISABLE);
-		
+		//禁止四个电机EN脚
 		GPIO_ResetBits(MOTOR1_EN_PIN);
 		GPIO_ResetBits(MOTOR2_EN_PIN);
 		GPIO_ResetBits(MOTOR3_EN_PIN);
