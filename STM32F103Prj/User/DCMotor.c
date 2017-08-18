@@ -129,13 +129,15 @@ void DCMotor_SetSpeed(int8_t nSpeed1,int8_t nSpeed2,int8_t nSpeed3,int8_t nSpeed
 	}
 	else if(nSpeed1 < 0)
 	{
-		MOTOR1_REV;
-		DCMotor_TIM3PWM_SetOC1Duty(-nSpeed1);
+		//MOTOR1_REV;
+		MOTOR1_FWD;  //电机接线问题，正好反过来了。
+		DCMotor_TIM3PWM_SetOC1Duty((uint8_t)-nSpeed1);
 	}
 	else
 	{
-		MOTOR1_FWD;
-		DCMotor_TIM3PWM_SetOC1Duty(nSpeed1);
+		//MOTOR1_FWD;
+		MOTOR1_REV;
+		DCMotor_TIM3PWM_SetOC1Duty((uint8_t)nSpeed1);
 	}
 	
 	if(nSpeed2 == 0)
@@ -146,12 +148,12 @@ void DCMotor_SetSpeed(int8_t nSpeed1,int8_t nSpeed2,int8_t nSpeed3,int8_t nSpeed
 	else if(nSpeed2 < 0)
 	{
 		MOTOR2_REV;
-		DCMotor_TIM3PWM_SetOC2Duty(-nSpeed2);
+		DCMotor_TIM3PWM_SetOC2Duty((uint8_t)-nSpeed2);
 	}
 	else
 	{
 		MOTOR2_FWD;
-		DCMotor_TIM3PWM_SetOC2Duty(nSpeed2);
+		DCMotor_TIM3PWM_SetOC2Duty((uint8_t)nSpeed2);
 	}
 	
 	if(nSpeed3 == 0)
@@ -162,12 +164,12 @@ void DCMotor_SetSpeed(int8_t nSpeed1,int8_t nSpeed2,int8_t nSpeed3,int8_t nSpeed
 	else if(nSpeed3 < 0)
 	{
 		MOTOR3_REV;
-		DCMotor_TIM3PWM_SetOC3Duty(-nSpeed3);
+		DCMotor_TIM3PWM_SetOC3Duty((uint8_t)-nSpeed3);
 	}
 	else
 	{
 		MOTOR3_FWD;
-		DCMotor_TIM3PWM_SetOC3Duty(100-nSpeed3);
+		DCMotor_TIM3PWM_SetOC3Duty((uint8_t)nSpeed3);
 	}
 	
 	if(nSpeed4 == 0)
@@ -178,12 +180,12 @@ void DCMotor_SetSpeed(int8_t nSpeed1,int8_t nSpeed2,int8_t nSpeed3,int8_t nSpeed
 	else if(nSpeed4 < 0)
 	{
 		MOTOR4_REV;
-		DCMotor_TIM3PWM_SetOC4Duty(-nSpeed4);
+		DCMotor_TIM3PWM_SetOC4Duty((uint8_t)-nSpeed4);
 	}
 	else
 	{
 		MOTOR4_FWD;
-		DCMotor_TIM3PWM_SetOC4Duty(100-nSpeed4);
+		DCMotor_TIM3PWM_SetOC4Duty((uint8_t)nSpeed4);
 	}
 }
 

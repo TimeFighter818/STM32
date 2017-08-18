@@ -5,6 +5,8 @@
 #include "StepMotor.h"
 #include "ServoMotor.h"
 #include "USART.h"
+#include "action.h"
+
 //RCC_Configuration(), NVIC_Configuration(), GPIO_Config() 在引用前要声明一下。
 void RCC_Configuration(void); //系统时钟配置
 void NVIC_Configuration(void); //中断配置
@@ -36,23 +38,66 @@ int main(void)
 	
 	//测试串口1
 	USART1_Init();  //要改波特率什么的请到函数里去改，默认是115200
+	nSpeed = -90;
+		
+	//等待按key0键继续
+	while(GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_1)==1) ;
 	
 	while(1)
 	{
+		//读取红外数据放在nIRData中。A13~15对应S1~S3放在D0~D2，PC10~12对应S4、S5、Near，放在D3~D5
+		action_GoStraight(1);
+		Delay_ms(100);
+		action_Turn90(1);
+		Delay_ms(100);
+		action_GoStraight(1);
+		Delay_ms(100);
+		action_Turn90(-1);
+		Delay_ms(100);
+		action_GoStraight(1);
+		Delay_ms(100);
+		action_Turn90(1);
+		Delay_ms(100);		
+		action_GoStraight(3);
+		Delay_ms(100);
+		action_Turn90(1);
+		Delay_ms(100);
+		action_GoStraight(1);
+		Delay_ms(100);
+		action_Turn90(1);
+		Delay_ms(100);
+		action_GoStraight(1);
+		Delay_ms(100);
+		action_Turn90(-1);
+		Delay_ms(100);	
+		action_GoStraight(1);
+		Delay_ms(100);
+		action_Turn90(1);
+		Delay_ms(100);		
+		action_GoStraight(3);
+		Delay_ms(100);
+		action_Turn90(1);
+		Delay_ms(2000);
 		
-		Delay_ms(1000);
-		DCMotor_SetSpeed(nSpeed,nSpeed,nSpeed,nSpeed);
-		nSpeed++;
-		if(nSpeed>90) nSpeed = -90;
-		
+//		Delay_ms(500);
+//		DCMotor_SetSpeed(-nSpeed,nSpeed,0,0);
+//		
+//		nSpeed = nSpeed+10;
+//		if(nSpeed>90) 
+//		{
+//			nSpeed = -90;
+//			DCMotor_SetSpeed(0,0,0,0);
+//			Delay_ms(1000);
+//		}
+//		
 		//StepMotor_SetSteps(1,1000000);
 		
-		ServoMotor_SetPulse(1,nServoPulse);
-		ServoMotor_SetPulse(2,nServoPulse);
-		ServoMotor_SetPulse(3,nServoPulse);
-		ServoMotor_SetPulse(4,nServoPulse);
-		nServoPulse += 10;
-		if(nServoPulse>2000) nServoPulse = 1000;
+//		ServoMotor_SetPulse(1,nServoPulse);
+//		ServoMotor_SetPulse(2,nServoPulse);
+//		ServoMotor_SetPulse(3,nServoPulse);
+//		ServoMotor_SetPulse(4,nServoPulse);
+//		nServoPulse += 10;
+//		if(nServoPulse>2000) nServoPulse = 1000;
 		
 		//测试串口
 		USART_Process();   //可以调用这个命令处理
@@ -248,5 +293,17 @@ void GPIO_Config(void){
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 	
+	//配置PC1为key0输入，注意与上面的步进电机控制线重了，不用步进电机的话，这里可以用
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
+	//配置PA10,PA13,A14,PA15,PC10,PC11,PC12为红外输入
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10|GPIO_Pin_13|GPIO_Pin_14|GPIO_Pin_15;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10|GPIO_Pin_11|GPIO_Pin_12;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
 	
 }
